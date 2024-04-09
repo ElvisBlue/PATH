@@ -43,7 +43,7 @@ bool pluginInit(PLUG_INITSTRUCT* initStruct)
     if (lResult != ERROR_SUCCESS) {
         _plugin_logprint("Error reading registry value\n");
         RegCloseKey(hKey);
-        return 1;
+        return true;
     }
 
     wchar_t* ptr = buffer;
