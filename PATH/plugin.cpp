@@ -10,6 +10,7 @@
 
 BOOL AddDllDirectoryWithEnv(wchar_t* path)
 {
+    //_plugin_logprintf("Add '%ls' path\n", path);
     wchar_t pathContent[4096];
     if (!ExpandEnvironmentStrings(path, pathContent, sizeof(pathContent) / sizeof(wchar_t)))
     {
@@ -18,17 +19,17 @@ BOOL AddDllDirectoryWithEnv(wchar_t* path)
     return (AddDllDirectory(pathContent) != 0);
 }
 
-// Initialize your plugin data here.
-bool pluginInit(PLUG_INITSTRUCT* initStruct)
+bool loadPathFromRegistry(HKEY hKeyType, const wchar_t* registryPath)
 {
     HKEY hKey;
     LONG lResult;
 
     // ChatGPT....
     // Open the registry key
-    lResult = RegOpenKeyEx(HKEY_LOCAL_MACHINE, L"SYSTEM\\CurrentControlSet\\Control\\Session Manager\\Environment", 0, KEY_READ, &hKey);
+    lResult = RegOpenKeyEx(hKeyType, registryPath, 0, KEY_READ, &hKey);
 
-    if (lResult != ERROR_SUCCESS) {
+    if (lResult != ERROR_SUCCESS) 
+    {
         _plugin_logprint("RegOpenKeyEx failed\n");
         return false;
     }
@@ -40,7 +41,8 @@ bool pluginInit(PLUG_INITSTRUCT* initStruct)
     // Read the registry value
     lResult = RegQueryValueEx(hKey, L"Path", NULL, NULL, reinterpret_cast<LPBYTE>(buffer), &dataSize);
 
-    if (lResult != ERROR_SUCCESS) {
+    if (lResult != ERROR_SUCCESS) 
+    {
         _plugin_logprint("Error reading registry value\n");
         RegCloseKey(hKey);
         return true;
@@ -65,8 +67,14 @@ bool pluginInit(PLUG_INITSTRUCT* initStruct)
 
     // Close the registry key
     RegCloseKey(hKey);
+    return true;
+}
 
-    // SetDllDirectory(L"asdf");
+// Initialize your plugin data here.
+bool pluginInit(PLUG_INITSTRUCT* initStruct)
+{
+    loadPathFromRegistry(HKEY_LOCAL_MACHINE, L"SYSTEM\\CurrentControlSet\\Control\\Session Manager\\Environment");
+    loadPathFromRegistry(HKEY_CURRENT_USER, L"Environment");
     return true;
 }
 
